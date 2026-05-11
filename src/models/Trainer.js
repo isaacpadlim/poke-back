@@ -16,14 +16,6 @@ const trainerSchema = mongoose.Schema({
     },
     metaUnova: {
         type: String,
-    },
-    regionFavorita: {
-        type: String,
-        default: 'Unova'
-    },
-    pokemonFavorito: {
-        type: String,
-        default: 'Snivy'
     }
 }, {
     timestamps: true

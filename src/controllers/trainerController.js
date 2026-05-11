@@ -94,7 +94,7 @@ const updateTrainer = asyncHandler(async (req, res) => {
     res.status(200).json(updatedTrainer)
 })
 
-// Eliminar entrenador y sus favoritos
+// Eliminar entrenador y su equipo
 const deleteTrainer = asyncHandler(async (req, res) => {
     const trainer = await Trainer.findById(req.params.id)
 
@@ -103,11 +103,10 @@ const deleteTrainer = asyncHandler(async (req, res) => {
         throw new Error('Entrenador no encontrado')
     }
 
-    // Borrado en cascada
     await Favorite.deleteMany({ trainerId: req.params.id })
     await trainer.deleteOne()
 
-    res.status(200).json({ message: "Entrenador y favoritos eliminados correctamente" })
+    res.status(200).json({ message: "Entrenador y equipo Pokémon eliminados correctamente" })
 })
 
 module.exports = {
