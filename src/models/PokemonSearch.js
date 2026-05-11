@@ -1,14 +1,10 @@
 const mongoose = require('mongoose')
 
-const favoriteSchema = mongoose.Schema({
-    trainerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'Trainer'
-    },
+const pokemonSearchSchema = mongoose.Schema({
     pokemonId: {
         type: Number,
-        required: [true, 'Por favor proporciona el ID del Pokémon']
+        required: [true, 'Por favor proporciona el ID del Pokémon'],
+        unique: true
     },
     pokemonName: {
         type: String,
@@ -20,9 +16,17 @@ const favoriteSchema = mongoose.Schema({
     },
     image: {
         type: String
+    },
+    searchCount: {
+        type: Number,
+        default: 1
+    },
+    lastSearchedAt: {
+        type: Date,
+        default: Date.now
     }
 }, {
     timestamps: true
 })
 
-module.exports = mongoose.model('Favorite', favoriteSchema)
+module.exports = mongoose.model('PokemonSearch', pokemonSearchSchema)

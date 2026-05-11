@@ -18,6 +18,7 @@ app.use(express.urlencoded({ extended: false }))
 //rutas
 app.use('/api/trainers', require('./routes/trainerRoutes'))
 app.use('/api/favorites', require('./routes/favoriteRoutes'))
+app.use('/api/pokemon-searches', require('./routes/pokemonSearchRoutes'))
 
 app.use(errorHandler)
 

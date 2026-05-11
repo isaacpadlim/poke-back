@@ -1,2 +1,6 @@
 node_modules
+<<<<<<< HEAD
 .env
+=======
+.env
+>>>>>>> f5a029d (Nuevas rutas backend)
