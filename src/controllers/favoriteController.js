@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler')
 const Favorite = require('../models/Favorite')
+const Trainer = require('../models/Trainer')
 
 // Obtener todos los favoritos
 const getFavorites = asyncHandler(async (req, res) => {
@@ -20,6 +21,13 @@ const createFavorite = asyncHandler(async (req, res) => {
     if (!trainerId || !pokemonId || !pokemonName) {
         res.status(400)
         throw new Error('Por favor teclea trainerId, pokemonId y pokemonName')
+    }
+
+    // Validar que el entrenador exista
+    const trainer = await Trainer.findById(trainerId)
+    if (!trainer) {
+        res.status(404)
+        throw new Error('El entrenador ya no existe. Inicia sesión nuevamente.')
     }
 
     // Validar máximo 6 Pokémon
