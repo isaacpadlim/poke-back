@@ -1,25 +1,19 @@
 const asyncHandler = require('express-async-handler')
 const Favorite = require('../models/Favorite')
 
-// @desc    Obtener todos los favoritos
-// @route   GET /api/favorites
-// @access  Public
+// Obtener todos los favoritos
 const getFavorites = asyncHandler(async (req, res) => {
     const favorites = await Favorite.find().populate('trainerId', 'nombreEntrenador')
     res.status(200).json(favorites)
 })
 
-// @desc    Obtener favoritos de un entrenador
-// @route   GET /api/favorites/trainer/:trainerId
-// @access  Public
+// Obtener equipo de un entrenador
 const getFavoritesByTrainer = asyncHandler(async (req, res) => {
     const favorites = await Favorite.find({ trainerId: req.params.trainerId })
     res.status(200).json(favorites)
 })
 
-// @desc    Crear un favorito
-// @route   POST /api/favorites
-// @access  Public
+// Crear favorito (Agregar a mi equipo)
 const createFavorite = asyncHandler(async (req, res) => {
     const { trainerId, pokemonId, pokemonName, types, image } = req.body
 
@@ -28,12 +22,18 @@ const createFavorite = asyncHandler(async (req, res) => {
         throw new Error('Por favor teclea trainerId, pokemonId y pokemonName')
     }
 
-    // Verificar si ya existe este favorito para este entrenador
-    const favoriteExists = await Favorite.findOne({ trainerId, pokemonId })
+    // Validar máximo 6 Pokémon
+    const teamCount = await Favorite.countDocuments({ trainerId })
+    if (teamCount >= 6) {
+        res.status(400)
+        throw new Error('Tu equipo está completo. Elimina un Pokémon antes de agregar otro.')
+    }
 
+    // Evitar duplicados en el mismo equipo
+    const favoriteExists = await Favorite.findOne({ trainerId, pokemonId })
     if (favoriteExists) {
         res.status(400)
-        throw new Error('Este entrenador ya tiene a este Pokémon en sus favoritos')
+        throw new Error('Este Pokémon ya está en tu equipo.')
     }
 
     const favorite = await Favorite.create({
@@ -46,15 +46,13 @@ const createFavorite = asyncHandler(async (req, res) => {
     res.status(201).json(favorite)
 })
 
-// @desc    Eliminar un favorito
-// @route   DELETE /api/favorites/:id
-// @access  Public
+// Eliminar favorito
 const deleteFavorite = asyncHandler(async (req, res) => {
     const favorite = await Favorite.findById(req.params.id)
 
     if (!favorite) {
         res.status(404)
-        throw new Error('Favorito no encontrado')
+        throw new Error('Pokémon no encontrado en el equipo')
     }
 
     await favorite.deleteOne()

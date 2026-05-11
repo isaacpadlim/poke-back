@@ -1,45 +1,87 @@
 const asyncHandler = require('express-async-handler')
 const Trainer = require('../models/Trainer')
+const Favorite = require('../models/Favorite')
 
-// obtener entrenadores
+// Obtener entrenadores
 const getTrainers = asyncHandler(async (req, res) => {
-    const trainers = await Trainer.find()
+    const trainers = await Trainer.find().select('-password')
     res.status(200).json(trainers)
 })
 
-//obtener un entrenador por ID
+// Obtener un entrenador
 const getTrainer = asyncHandler(async (req, res) => {
-    const trainer = await Trainer.findById(req.params.id)
-
+    const trainer = await Trainer.findById(req.params.id).select('-password')
     if (!trainer) {
         res.status(404)
         throw new Error('Entrenador no encontrado')
     }
-
     res.status(200).json(trainer)
 })
 
-//crear un nuevo entrenador
-const setTrainer = asyncHandler(async (req, res) => {
-    const { nombreEntrenador, correo, metaUnova, regionFavorita, pokemonFavorito } = req.body
+// Crear entrenador (Registro)
+const createTrainer = asyncHandler(async (req, res) => {
+    const { nombreEntrenador, correo, password, metaUnova } = req.body
 
-    if (!nombreEntrenador || !correo || !metaUnova) {
+    if (!nombreEntrenador || !correo || !password) {
         res.status(400)
-        throw new Error('Por favor teclea los campos obligatorios: nombreEntrenador, correo, metaUnova')
+        throw new Error('Por favor teclea nombre, correo y contraseña')
+    }
+
+    // Evitar duplicados
+    const trainerExists = await Trainer.findOne({ correo })
+    if (trainerExists) {
+        res.status(400)
+        throw new Error('Ya existe un entrenador registrado con este correo')
     }
 
     const trainer = await Trainer.create({
         nombreEntrenador,
         correo,
-        metaUnova,
-        regionFavorita: regionFavorita || 'Unova',
-        pokemonFavorito: pokemonFavorito || 'Pikachu'
+        password,
+        metaUnova
     })
 
-    res.status(201).json(trainer)
+    if (trainer) {
+        res.status(201).json({
+            _id: trainer._id,
+            nombreEntrenador: trainer.nombreEntrenador,
+            correo: trainer.correo,
+            metaUnova: trainer.metaUnova
+        })
+    } else {
+        res.status(400)
+        throw new Error('Datos no válidos')
+    }
 })
 
-//actualizar un entrenador
+// Login de entrenador
+const loginTrainer = asyncHandler(async (req, res) => {
+    const { correo, password } = req.body
+
+    if (!correo || !password) {
+        res.status(400)
+        throw new Error('Por favor teclea correo y contraseña')
+    }
+
+    const trainer = await Trainer.findOne({ correo, password })
+
+    if (trainer) {
+        res.status(200).json({
+            message: "Login correcto",
+            trainer: {
+                _id: trainer._id,
+                nombreEntrenador: trainer.nombreEntrenador,
+                correo: trainer.correo,
+                metaUnova: trainer.metaUnova
+            }
+        })
+    } else {
+        res.status(401)
+        throw new Error('Correo o contraseña incorrectos')
+    }
+})
+
+// Modificar entrenador
 const updateTrainer = asyncHandler(async (req, res) => {
     const trainer = await Trainer.findById(req.params.id)
 
@@ -48,16 +90,11 @@ const updateTrainer = asyncHandler(async (req, res) => {
         throw new Error('Entrenador no encontrado')
     }
 
-    const updatedTrainer = await Trainer.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true }
-    )
-
+    const updatedTrainer = await Trainer.findByIdAndUpdate(req.params.id, req.body, { new: true }).select('-password')
     res.status(200).json(updatedTrainer)
 })
 
-//eliminar un entrenador
+// Eliminar entrenador y sus favoritos
 const deleteTrainer = asyncHandler(async (req, res) => {
     const trainer = await Trainer.findById(req.params.id)
 
@@ -66,15 +103,18 @@ const deleteTrainer = asyncHandler(async (req, res) => {
         throw new Error('Entrenador no encontrado')
     }
 
+    // Borrado en cascada
+    await Favorite.deleteMany({ trainerId: req.params.id })
     await trainer.deleteOne()
 
-    res.status(200).json({ id: req.params.id })
+    res.status(200).json({ message: "Entrenador y favoritos eliminados correctamente" })
 })
 
 module.exports = {
     getTrainers,
     getTrainer,
-    setTrainer,
+    createTrainer,
+    loginTrainer,
     updateTrainer,
     deleteTrainer
 }

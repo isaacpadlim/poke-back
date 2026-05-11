@@ -10,9 +10,12 @@ const trainerSchema = mongoose.Schema({
         required: [true, 'Por favor teclea el correo electrónico'],
         unique: true
     },
+    password: {
+        type: String,
+        required: [true, 'Por favor teclea tu contraseña']
+    },
     metaUnova: {
         type: String,
-        required: [true, 'Por favor teclea cuál es tu meta en la región Unova']
     },
     regionFavorita: {
         type: String,
