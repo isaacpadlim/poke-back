@@ -1,4 +1,5 @@
 const asyncHandler = require('express-async-handler')
+const bcrypt = require('bcryptjs')
 const Trainer = require('../models/Trainer')
 const Favorite = require('../models/Favorite')
 
@@ -34,10 +35,14 @@ const createTrainer = asyncHandler(async (req, res) => {
         throw new Error('Ya existe un entrenador registrado con este correo')
     }
 
+    // Encriptar contraseña
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+
     const trainer = await Trainer.create({
         nombreEntrenador,
         correo,
-        password,
+        password: hashedPassword,
         metaUnova
     })
 
@@ -63,9 +68,10 @@ const loginTrainer = asyncHandler(async (req, res) => {
         throw new Error('Por favor teclea correo y contraseña')
     }
 
-    const trainer = await Trainer.findOne({ correo, password })
+    const trainer = await Trainer.findOne({ correo })
 
-    if (trainer) {
+    // Comparar contraseña
+    if (trainer && (await bcrypt.compare(password, trainer.password))) {
         res.status(200).json({
             message: "Login correcto",
             trainer: {
